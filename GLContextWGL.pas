@@ -53,7 +53,7 @@ var
   OldRC: HGLRC; OldDC: HDC;
   tmpWnd: TForm;
   tmpContext: TGLContextWGL;
-  pf, Count, i: integer;
+  pf, Count, i, max: integer;
   PFList, SampleList: array[0..31] of glInt;
 
   procedure ChoosePF(pPFList, pSampleList: PGLint; MaxCount: integer);
@@ -160,15 +160,20 @@ begin
     tmpWnd:= TForm.Create(nil);
     tmpContext:= TGLContextWGL.Create(tmpWnd);
     try
-      pf:= tmpContext.FindPixelFormatNoAA(FormatSettings);
+      pf := tmpContext.FindPixelFormatNoAA(FormatSettings);
       tmpContext.OpenFromPF(pf);
       tmpContext.Activate;
 
+      FillChar(PFList[0], Length(PFList), 0);
+      FillChar(SampleList[0], Length(SampleList), 0);
       ChoosePF(@PFList[0], @SampleList[0], length(SampleList));
+      max := 0;
       for i := 0 to Count-1 do begin
-        if SampleList[i] >= FormatSettings.MultiSampling then begin
-          Result:= PFList[i];
-          break;
+        if (max < SampleList[i]) and (SampleList[i] <= FormatSettings.MultiSampling) and (PFList[i] <> 0) then begin
+          max := SampleList[i];
+          result := PFList[i];
+          if (max = FormatSettings.MultiSampling) then
+            break;
         end;
       end;
       tmpContext.Deactivate;
