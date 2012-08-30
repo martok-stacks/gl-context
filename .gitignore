@@ -1,0 +1,9 @@
+*.~*
+*.dcu
+*.cfg
+*.dof
+*.res
+*.ddp
+*/lib/
+*/backup/
+/py/
