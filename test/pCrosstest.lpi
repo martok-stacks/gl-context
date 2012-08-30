@@ -65,9 +65,9 @@
         <UnitName Value="GLContext"/>
       </Unit4>
       <Unit5>
-        <Filename Value="..\GLContextGLX.pas"/>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="GLContextGLX"/>
+        <UnitName Value="GLContextGtk2GLX"/>
       </Unit5>
       <Unit6>
         <Filename Value="..\GLContextWGL.pas"/>

@@ -1,4 +1,4 @@
-unit GLContextGLX;
+unit GLContextGtk2GLX;
 
 {$IFDEF FPC}
 {$mode delphi}
@@ -11,14 +11,14 @@ uses
 
 type
 
-  { TGLContextGLX }
+  { TGLContextGtk2GLX }
 
-  TGLContextGLX = class(TGLContext)
+  TGLContextGtk2GLX = class(TGLContext)
   private
     fCtx: pointer;
   protected
     procedure CloseContext; override;
-    function OpenContext(pf: TContextPixelFormatSettings): boolean; override;
+    procedure OpenContext(pf: TContextPixelFormatSettings); override;
   public
     procedure Activate; override;
     procedure Deactivate; override;
@@ -28,29 +28,29 @@ type
 implementation
 
 
-{ TGLContextGLX }
+{ TGLContextGtk2GLX }
 
-function TGLContextGLX.OpenContext(pf: TContextPixelFormatSettings): boolean;
+procedure TGLContextGtk2GLX.OpenContext(pf: TContextPixelFormatSettings);
 begin
  // fCtx:= glXCreateNewContext(??,??,GLX_RGBA_TYPE,nil, true);
 end;
 
-procedure TGLContextGLX.CloseContext;
+procedure TGLContextGtk2GLX.CloseContext;
 begin
 
 end;
 
-procedure TGLContextGLX.Activate;
+procedure TGLContextGtk2GLX.Activate;
 begin
 
 end;
 
-procedure TGLContextGLX.Deactivate;
+procedure TGLContextGtk2GLX.Deactivate;
 begin
 
 end;
 
-procedure TGLContextGLX.SwapBuffers;
+procedure TGLContextGtk2GLX.SwapBuffers;
 begin
 
 end;

@@ -30,8 +30,8 @@ type
   private
     FControl: TWinControl;
   protected
+    procedure OpenContext(pf: TContextPixelFormatSettings); virtual; abstract;
     procedure CloseContext; virtual; abstract;
-    function OpenContext(pf: TContextPixelFormatSettings): boolean; virtual; abstract;
   public
     class function MakePF(DoubleBuffered: boolean = true;
                           Stereo: boolean=false;
@@ -43,11 +43,12 @@ type
                           AuxBuffers: Integer=0;
                           Layer: Integer=0): TContextPixelFormatSettings;
 
-    constructor Create(aControl: TWinControl; pf: TContextPixelFormatSettings);
+    constructor Create(aControl: TWinControl);
     destructor Destroy; override;
 
     property Control: TWinControl read FControl;
 
+    procedure BuildContext(pf: TContextPixelFormatSettings);
     procedure Activate; virtual; abstract;
     procedure Deactivate; virtual; abstract;
     procedure SwapBuffers; virtual; abstract;
@@ -73,21 +74,23 @@ begin
   Result.Layer:= Layer;
 end;
 
-constructor TGLContext.Create(aControl: TWinControl; pf: TContextPixelFormatSettings);
+constructor TGLContext.Create(aControl: TWinControl);
 begin
   inherited Create;
   FControl:= aControl;
   InitOpenGL();
-  if OpenContext(pf) then begin
-    Activate;
-    ReadExtensions;
-  end else
-    raise EGLError.Create('Cannot create rendering context!');
 end;
 
 destructor TGLContext.Destroy;
 begin
   inherited Destroy;
+end;
+
+procedure TGLContext.BuildContext(pf: TContextPixelFormatSettings);
+begin
+  OpenContext(pf);
+  Activate;
+  ReadExtensions;
 end;
 
 end.

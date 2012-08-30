@@ -36,7 +36,7 @@ uses
   GLContextWGL
 {$ENDIF}
 {$IFDEF LINUX}
-  GLContextGLX
+  GLContextGtk2GLX
 {$ENDIF}
 ;
 
@@ -49,13 +49,14 @@ var
   pf: TContextPixelFormatSettings;
 begin
   Application.OnIdle:= Idle;
-  pf:= TGLContext.MakePF();
   {$IFDEF WINDOWS}
-  FContext:= TGLContextWGL.Create(Self, pf);
+  FContext:= TGLContextWGL.Create(Self);
   {$ENDIF}
   {$IFDEF LINUX}
-  FContext:= TGLContextGLX.Create(Self, pf);
+  FContext:= TGLContextGtk2GLX.Create(Self);
   {$ENDIF}
+  pf:= TGLContext.MakePF();
+  FContext.BuildContext(pf);
   runtime:= 0;
 end;
 

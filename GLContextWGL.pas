@@ -19,7 +19,7 @@ type
     FRC: HGLRC;
   protected
     procedure CloseContext; override;
-    function OpenContext(pf: TContextPixelFormatSettings): boolean; override;
+    procedure OpenContext(pf: TContextPixelFormatSettings); override;
   public
     procedure Activate; override;
     procedure Deactivate; override;
@@ -30,7 +30,7 @@ implementation
 
 { TGLContextWGL }
 
-function TGLContextWGL.OpenContext(pf: TContextPixelFormatSettings): boolean;
+procedure TGLContextWGL.OpenContext(pf: TContextPixelFormatSettings);
 var
   opt: TRCOptions;
 begin
@@ -39,7 +39,6 @@ begin
   if pf.DoubleBuffered then include(opt, opDoubleBuffered);
   if pf.Stereo then include(opt, opStereo);
   FRC:= CreateRenderingContext(FDC, opt, pf.ColorBits, pf.DepthBits, pf.StencilBits, pf.AccumBits, pf.AuxBuffers, pf.Layer);
-  Result:= FRC<>0;
 end;
 
 procedure TGLContextWGL.CloseContext;

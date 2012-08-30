@@ -7,7 +7,8 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, uCrosstest, GLContext, GLContextGLX, GLContextWGL, dglOpenGL, FastGL;
+  Forms, uCrosstest, GLContext, 
+GLContextGtk2GLX, GLContextWGL, dglOpenGL, FastGL;
 
 {$R *.res}
 
