@@ -56,6 +56,7 @@ begin
   FContext:= TGLContextGtk2GLX.Create(Self);
   {$ENDIF}
   pf:= TGLContext.MakePF();
+  pf.MultiSampling:= 16;
   FContext.BuildContext(pf);
   runtime:= 0;
 end;

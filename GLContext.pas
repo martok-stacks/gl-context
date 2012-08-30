@@ -10,10 +10,11 @@ uses
   SysUtils, Controls, dglOpenGL;
 
 type
+  TMultiSample = 1..high(byte);
   TContextPixelFormatSettings = packed record
     DoubleBuffered: boolean;
     Stereo: boolean;
-    AA: boolean;
+    MultiSampling: TMultiSample;
     ColorBits: Integer;
     DepthBits: Integer;
     StencilBits: Integer;
@@ -30,12 +31,12 @@ type
   private
     FControl: TWinControl;
   protected
-    procedure OpenContext(pf: TContextPixelFormatSettings); virtual; abstract;
+    procedure OpenContext(FormatSettings: TContextPixelFormatSettings); virtual; abstract;
     procedure CloseContext; virtual; abstract;
   public
     class function MakePF(DoubleBuffered: boolean = true;
                           Stereo: boolean=false;
-                          AA: boolean=false;
+                          MultiSampling: TMultiSample=1;
                           ColorBits: Integer=32;
                           DepthBits: Integer=24;
                           StencilBits: Integer=0;
@@ -48,7 +49,7 @@ type
 
     property Control: TWinControl read FControl;
 
-    procedure BuildContext(pf: TContextPixelFormatSettings);
+    procedure BuildContext(FormatSettings: TContextPixelFormatSettings);
     procedure Activate; virtual; abstract;
     procedure Deactivate; virtual; abstract;
     procedure SwapBuffers; virtual; abstract;
@@ -59,13 +60,13 @@ implementation
 { TGLContext }
 
 class function TGLContext.MakePF(DoubleBuffered: boolean; Stereo: boolean;
-  AA: boolean; ColorBits: Integer; DepthBits: Integer; StencilBits: Integer;
+  MultiSampling: TMultiSample; ColorBits: Integer; DepthBits: Integer; StencilBits: Integer;
   AccumBits: Integer; AuxBuffers: Integer; Layer: Integer
   ): TContextPixelFormatSettings;
 begin
   Result.DoubleBuffered:= DoubleBuffered;
   Result.Stereo:= Stereo;
-  Result.AA:= AA;
+  Result.MultiSampling:= MultiSampling;
   Result.ColorBits:= ColorBits;
   Result.DepthBits:= DepthBits;
   Result.StencilBits:= StencilBits;
@@ -86,9 +87,9 @@ begin
   inherited Destroy;
 end;
 
-procedure TGLContext.BuildContext(pf: TContextPixelFormatSettings);
+procedure TGLContext.BuildContext(FormatSettings: TContextPixelFormatSettings);
 begin
-  OpenContext(pf);
+  OpenContext(FormatSettings);
   Activate;
   ReadExtensions;
 end;
