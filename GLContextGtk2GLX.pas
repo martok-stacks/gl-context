@@ -7,17 +7,18 @@ unit GLContextGtk2GLX;
 interface
 
 uses
-  X, XUtil, XLib, gdk2x, glib2, gtk2, Gtk2Int, GLContext, dglOpenGL;
+  XUtil, XLib, gdk2x, gtk2, gdk2, Gtk2Int, GLContext, dglOpenGL;
 
 type
+  EGLXError = class(EGLError);
 
   { TGLContextGtk2GLX }
 
   TGLContextGtk2GLX = class(TGLContext)
   private
     FDisplay: PDisplay;
+    FWidget: PGtkWidget;
     FContext: GLXContext;
-    procedure CreateContextInternal(pf: TContextPixelFormatSettings);
   protected
     procedure CloseContext; override;
     procedure OpenContext(pf: TContextPixelFormatSettings); override;
@@ -29,54 +30,40 @@ type
 
 implementation
 
+type
+  TGLIntArray = packed array of GLInt;
 
-{ TGLContextGtk2GLX }
-
-procedure TGLContextGtk2GLX.OpenContext(pf: TContextPixelFormatSettings);
-begin
-  if (pf.MultiSampling > 1) and
-     GLX_ARB_multisample(GetDefaultXDisplay, DefaultScreen(GetDefaultXDisplay))  then
-  try
-    Result := CreateContextInternal(pf);
-  except
-    { retry without MultiSampling }
-    pf.MultiSampling:= 1;
-    Result := CreateContextInternal(pf);
-  end else begin
-    { no multi-sampling requested (or GLX_ARB_multisample not available),
-      just pass to LOpenGLCreateContextCore }
-    pf.MultiSampling:= 1;
-    Result := CreateContextInternal(pf);
-  end;
-end;
-
-function CreateOpenGLContextAttrList(pf: TContextPixelFormatSettings): PInteger;
+function CreateOpenGLContextAttrList(UseFB: boolean; pf: TContextPixelFormatSettings): TGLIntArray;
 var
   p: integer;
 
   procedure Add(i: integer);
   begin
-    if Result<>nil then
-      Result[p]:=i;
+    SetLength(Result, p+1);
+    Result[p]:=i;
     inc(p);
   end;
 
   procedure CreateList;
   begin
-    Add(GLX_X_RENDERABLE); Add(1);
+    if UseFB then begin Add(GLX_X_RENDERABLE); Add(1); end;
     if pf.DoubleBuffered then
     begin
-      Add(GLX_DOUBLEBUFFER); Add(1);
+      if UseFB then begin
+        Add(GLX_DOUBLEBUFFER); Add(1);
+      end else
+        Add(GLX_DOUBLEBUFFER);
     end;
+    if not UseFB then Add(GLX_RGBA);
     Add(GLX_RED_SIZE);  Add(1);
     Add(GLX_GREEN_SIZE);  Add(1);
     Add(GLX_BLUE_SIZE);  Add(1);
-    Add(GLX_ALPHA_SIZE);  Add(1);//TODO: Add(AlphaBits);
+    Add(GLX_ALPHA_SIZE);  Add(0);//TODO: Add(AlphaBits);
     Add(GLX_DEPTH_SIZE);  Add(pf.DepthBits);
     Add(GLX_STENCIL_SIZE);  Add(pf.StencilBits);
     Add(GLX_AUX_BUFFERS);  Add(pf.AUXBuffers);
 
-    if MultiSampling > 1 then
+    if pf.MultiSampling > 1 then
     begin
       Add(GLX_SAMPLE_BUFFERS_ARB); Add(1);
       Add(GLX_SAMPLES_ARB); Add(pf.MultiSampling);
@@ -86,39 +73,64 @@ var
   end;
 
 begin
-  Result:=nil;
-  p:=0;
-  CreateList;
-  GetMem(Result,SizeOf(integer)*p);
+  SetLength(Result, 0);
   p:=0;
   CreateList;
 end;
 
-procedure TGLContextGtk2GLX.CreateContextInternal(pf: TContextPixelFormatSettings);
+
+{ TGLContextGtk2GLX }
+
+procedure TGLContextGtk2GLX.OpenContext(pf: TContextPixelFormatSettings);
 var
-  Widget: PGtkWidget;
-  SharedArea: PGtkGLArea;
-  attrList: PInteger;
+  attrList: TGLIntArray;
   drawable: PGdkDrawable;
+  vi: PXVisualInfo;
 begin
-  attrList:=CreateOpenGLContextAttrList(pf);
-  try
-    Widget:= PGtkWidget(PtrUInt(Control.Handle));
-    drawable:= GTK_WIDGET(Widget)^.window;
+  FWidget:= {%H-}PGtkWidget(PtrUInt(Control.Handle));
+  gtk_widget_realize(FWidget);
+  drawable:= GTK_WIDGET(FWidget)^.window;
 
-    FDisplay:= GDK_WINDOW_XDISPLAY(drawable);
-    vi:= glXChooseVisual(FDisplay, DefaultScreen(dpy), @attrList[0]);
-    if vi=nil then
-      raise Exception.Create('gdk_gl_context_share_new no visual found');
+  FDisplay:= GDK_WINDOW_XDISPLAY(drawable);
 
-    FContext := glXCreateContext(FDisplay, vi, nil, direct);
-
-    XFree(vi);
-    if (glxcontext = nil) then
-      exit;
-  finally
-    FreeMem(attrList);
+  attrList:=CreateOpenGLContextAttrList(false, pf);
+  vi:= glXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
+  if vi=nil then begin
+    pf.MultiSampling:= 1;
+    attrList:=CreateOpenGLContextAttrList(false, pf);
+    vi:= glXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
   end;
+  if vi=nil then
+    raise EGLXError.Create('Failed to find Visual');
+
+  try
+    FContext := glXCreateContext(FDisplay, vi, nil, false);
+  finally
+    XFree(vi);
+  end;
+
+  if (FContext = nil) then
+    raise EGLXError.Create('Failed to create Context');
+end;
+
+function FBglXChooseVisual(dpy:PDisplay; screen:longint; attrib_list:Plongint):PXVisualInfo;
+type
+  PGLXFBConfig = ^GLXFBConfig;
+var
+  FBConfigsCount: integer;
+  FBConfigs: PGLXFBConfig;
+  FBConfig: GLXFBConfig;
+begin
+  Result:= nil;
+  FBConfigsCount:=0;
+  FBConfigs:= glXChooseFBConfig(dpy, screen, attrib_list, @FBConfigsCount);
+  if FBConfigsCount = 0 then
+    raise EGLXError.Create('Could not find FB config');
+
+  { just choose the first FB config from the FBConfigs list.
+    More involved selection possible. }
+  FBConfig := FBConfigs^;
+  Result:=glXGetVisualFromFBConfig(dpy, FBConfig);
 end;
 
 procedure TGLContextGtk2GLX.CloseContext;
@@ -127,8 +139,6 @@ begin
 end;
 
 procedure TGLContextGtk2GLX.Activate;
-var
-  glarea: PGtkGLArea;
 begin
   // make sure the widget is realized
   gtk_widget_realize(FWidget);
@@ -136,21 +146,20 @@ begin
 
   // make current
 
-  glXMakeCurrent(FDisplay, GDK_WINDOW_XWINDOW(PGtkWidget(Control.Handle)^.window), FContext);
+  glXMakeCurrent(FDisplay, GDK_WINDOW_XWINDOW(GTK_WIDGET(FWidget)^.window), FContext);
 end;
 
 procedure TGLContextGtk2GLX.Deactivate;
 begin
-  glXMakeCurrent(FDisplay, nil, nil);
+  glXMakeCurrent(FDisplay, GDK_WINDOW_XWINDOW(GTK_WIDGET(FWidget)^.window), nil);
 end;
 
 procedure TGLContextGtk2GLX.SwapBuffers;
 var
   drawable: PGdkDrawable;
 begin
-  drawable:= GTK_WIDGET(PtrUInt(Control.Handle))^.window;
-  glXSwapBuffers(GDK_WINDOW_XDISPLAY(drawable),
-                 GDK_WINDOW_XWINDOW(drawable));
+  drawable:= GTK_WIDGET(FWidget)^.window;
+  glXSwapBuffers(FDisplay, GDK_WINDOW_XWINDOW(drawable));
 end;
 
 end.

@@ -28,6 +28,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
+        <LaunchingApplication PathPlusParams="\usr\bin\xterm -T 'Lazarus Run Output' -e $(LazarusDir)\tools\runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
     <RequiredPackages Count="1">
@@ -35,7 +36,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="7">
+    <Units Count="4">
       <Unit0>
         <Filename Value="pCrosstest.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -55,25 +56,10 @@
         <UnitName Value="dglOpenGL"/>
       </Unit2>
       <Unit3>
-        <Filename Value="use\FastGL.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="FastGL"/>
-      </Unit3>
-      <Unit4>
         <Filename Value="..\GLContext.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="GLContext"/>
-      </Unit4>
-      <Unit5>
-        <Filename Value="..\GLContextGtk2GLX.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="GLContextGtk2GLX"/>
-      </Unit5>
-      <Unit6>
-        <Filename Value="..\GLContextWGL.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="GLContextWGL"/>
-      </Unit6>
+      </Unit3>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -89,7 +75,7 @@
     </SearchPaths>
     <CodeGeneration>
       <TargetCPU Value="i386"/>
-      <TargetOS Value="win32"/>
+      <TargetOS Value="linux"/>
     </CodeGeneration>
     <Linking>
       <Options>

@@ -15,9 +15,9 @@ unit FastGL;
 
 interface
 
-uses dglOpenGL, LCLIntf, LCLType, LMessages,GLHelper,Graphics,
+uses dglOpenGL, LCLIntf, LCLType, LMessages,GLHelper,Graphics
 {$IF DEFINED(Win32) or DEFINED(Win64)}
-  Windows
+  ,Windows
 {$ENDIF};
 
 const

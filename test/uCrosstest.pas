@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  dglOpenGL, GLContext, FastGL;
+  dglOpenGL, GLContext;
 
 type
 
@@ -16,6 +16,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormResize(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
     { private declarations }
     FContext: TGLContext;
@@ -41,14 +42,45 @@ uses
 ;
 
 {$R *.lfm}
+var
+  glFOV          : single =   45.0;
+  glNearClipping : single =    1.0;
+  glFarClipping  : single = 1000.0;
+
+procedure glResizeWnd(Width, Height : Integer);
+begin
+  if (Height = 0) then Height := 1;
+  glViewport(0, 0, Width, Height);    // Setzt den Viewport für das OpenGL Fenster
+  glMatrixMode(GL_PROJECTION);        // Matrix Mode auf Projection setzen
+  glLoadIdentity();                   // Reset View
+  gluPerspective(glFOV, Width/Height, glNearClipping, glFarClipping);  // Perspektive den neuen Maßen anpassen.
+
+  glMatrixMode(GL_MODELVIEW);         // Zurück zur Modelview Matrix
+  glLoadIdentity();                   // Reset View
+end;
 
 { TForm1 }
 
 procedure TForm1.FormCreate(Sender: TObject);
+begin
+  Application.OnIdle:= Idle;
+end;
+
+procedure TForm1.FormDestroy(Sender: TObject);
+begin
+  FreeAndNil(FContext);
+end;
+
+procedure TForm1.FormResize(Sender: TObject);
+begin
+  if not Assigned(FContext) then exit;
+  glResizeWnd(ClientWidth, ClientHeight);
+end;
+
+procedure TForm1.FormShow(Sender: TObject);
 var
   pf: TContextPixelFormatSettings;
 begin
-  Application.OnIdle:= Idle;
   {$IFDEF WINDOWS}
   FContext:= TGLContextWGL.Create(Self);
   {$ENDIF}
@@ -61,20 +93,11 @@ begin
   runtime:= 0;
 end;
 
-procedure TForm1.FormDestroy(Sender: TObject);
-begin
-  FreeAndNil(FContext);
-end;
-
-procedure TForm1.FormResize(Sender: TObject);
-begin
-  glResizeWnd(ClientWidth, ClientHeight);
-end;
-
 procedure TForm1.Idle(Sender: TObject; var Done: boolean);
 begin
   Done:= false;
   runtime:= runtime + 1;
+  if not Assigned(FContext) then exit;
   Render;
 end;
 

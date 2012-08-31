@@ -7,7 +7,7 @@ unit GLContextWGL;
 interface
 
 uses
-  Classes, SysUtils, Forms, Windows, GLContext, dglOpenGL, FastGL;
+  Classes, SysUtils, Forms, Windows, GLContext, dglOpenGL;
 
 type
   EWGLError = class(EGLError);

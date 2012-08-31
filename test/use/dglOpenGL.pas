@@ -496,7 +496,7 @@ uses
   {$IFDEF FPC}{$IFDEF DARWIN}dynlibs,{$ENDIF}{$ENDIF}  // LoadLibrary functions 
   SysUtils
   {$IFDEF DGL_WIN}, Windows{$ENDIF}
-  {$IFDEF DGL_LINUX}, X, XLib, XUtil{$ENDIF}
+  {$IFDEF DGL_LINUX}, Types, X, XLib, XUtil{$ENDIF}
   ;
 
 type
