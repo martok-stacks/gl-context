@@ -199,10 +199,8 @@ var
   PFDescriptor: TPixelFormatDescriptor;
 begin
   result := 0;
-  gluLastError := GLU_ERROR_NONE;
   DC := GetDC(Control.Handle);
   if DC = 0 then begin
-    gluLastError := GLU_ERROR_INVALID_HANDLE;
     exit;
   end;
   FillChar(PFDescriptor{%H-}, SizeOf(PFDescriptor), #0);
@@ -212,7 +210,6 @@ begin
     dwFlags  := PFD_SUPPORT_OPENGL;
     AType    := GetObjectType(DC);
     if AType = 0 then begin
-      gluLastError := GLU_ERROR_INVALID_OBJECT_TYPE;
       exit;
     end;
     if FormatSettings.DoubleBuffered then dwFlags := dwFlags or PFD_DOUBLEBUFFER;
