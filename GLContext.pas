@@ -2,6 +2,10 @@ unit GLContext;
 
 {$IFDEF FPC}
 {$mode delphi}
+{$ELSE} //Delphi
+{$IFDEF MSWINDOWS}
+  {$DEFINE WINDOWS}
+{$ENDIF}
 {$ENDIF}
 
 interface

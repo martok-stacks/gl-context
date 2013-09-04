@@ -142,7 +142,7 @@ var
 
     QueryAtrib := WGL_SAMPLES_ARB;
     PSample    := pSampleList;
-    PPosiblePF := PFList;
+    PPosiblePF := @PFList[0];
     for i := 0 to Count-1 do begin
       if multiARBSup then
         wglGetPixelFormatAttribivARB(tmpContext.FDC, PPosiblePF^, 0, 1, @QueryAtrib, PSample)
