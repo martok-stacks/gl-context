@@ -32,15 +32,6 @@ var
 
 implementation
 
-uses
-{$IFDEF WINDOWS}
-  GLContextWGL
-{$ENDIF}
-{$IFDEF LINUX}
-  GLContextGtk2GLX
-{$ENDIF}
-;
-
 {$R *.lfm}
 var
   glFOV          : single =   45.0;
@@ -79,14 +70,9 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 var
-  pf: TContextPixelFormatSettings;
+  pf: TglcContextPixelFormatSettings;
 begin
-  {$IFDEF WINDOWS}
-  FContext:= TGLContextWGL.Create(Self);
-  {$ENDIF}
-  {$IFDEF LINUX}
-  FContext:= TGLContextGtk2GLX.Create(Self);
-  {$ENDIF}
+  FContext:= TGLContext.GetPlatformClass.Create(Self);
   pf:= TGLContext.MakePF();
   pf.MultiSampling:= 16;
   FContext.BuildContext(pf);

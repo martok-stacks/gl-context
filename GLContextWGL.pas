@@ -20,21 +20,26 @@ type
     FRC: HGLRC;
   protected
     procedure CloseContext; override;
-    procedure OpenContext(FormatSettings: TContextPixelFormatSettings); override;
-    function FindPixelFormat(FormatSettings: TContextPixelFormatSettings): Integer;
-    function FindPixelFormatNoAA(FormatSettings: TContextPixelFormatSettings): Integer;
+    procedure OpenContext(FormatSettings: TglcContextPixelFormatSettings); override;
+    function FindPixelFormat(FormatSettings: TglcContextPixelFormatSettings): Integer;
+    function FindPixelFormatNoAA(FormatSettings: TglcContextPixelFormatSettings): Integer;
     procedure OpenFromPF(PixelFormat: Integer);
   public
     procedure Activate; override;
     procedure Deactivate; override;
     procedure SwapBuffers; override;
+    procedure SetSwapInterval(const aIntverval: GLint); override;
+    procedure Share(const aContext: TGLContext); override;
+
+    class function ChangeDisplaySettings(const aWidth, aHeight, aBitPerPixel, aFreq: Integer;
+      const aFlags: TglcDisplayFlags): Boolean; override;
   end;
 
 implementation
 
 { TGLContextWGL }
 
-procedure TGLContextWGL.OpenContext(FormatSettings: TContextPixelFormatSettings);
+procedure TGLContextWGL.OpenContext(FormatSettings: TglcContextPixelFormatSettings);
 var
   pf: integer;
 begin
@@ -48,7 +53,7 @@ begin
   OpenFromPF(pf);
 end;
 
-function TGLContextWGL.FindPixelFormat(FormatSettings: TContextPixelFormatSettings): Integer;
+function TGLContextWGL.FindPixelFormat(FormatSettings: TglcContextPixelFormatSettings): Integer;
 var
   OldRC: HGLRC; OldDC: HDC;
   tmpWnd: TForm;
@@ -154,8 +159,8 @@ begin
   end;
   Result:= 0;
 
-  OldDC:= wglGetCurrentDC;
-  OldRC:= wglGetCurrentContext;
+  OldDC:= wglGetCurrentDC();
+  OldRC:= wglGetCurrentContext();
   try
     tmpWnd:= TForm.Create(nil);
     tmpContext:= TGLContextWGL.Create(tmpWnd);
@@ -187,7 +192,7 @@ begin
   end;
 end;
 
-function TGLContextWGL.FindPixelFormatNoAA(FormatSettings: TContextPixelFormatSettings): Integer;
+function TGLContextWGL.FindPixelFormatNoAA(FormatSettings: TglcContextPixelFormatSettings): Integer;
 const
   MemoryDCs = [OBJ_MEMDC, OBJ_METADC, OBJ_ENHMETADC];
 var
@@ -262,7 +267,9 @@ procedure TGLContextWGL.CloseContext;
 begin
   Deactivate;
   DestroyRenderingContext(FRC);
-  inherited Destroy;
+  ReleaseDC(Control.Handle, FDC);
+  FRC:= 0;
+  FDC:= 0;
 end;
 
 procedure TGLContextWGL.Activate;
@@ -279,6 +286,37 @@ end;
 procedure TGLContextWGL.SwapBuffers;
 begin
   Windows.SwapBuffers(FDC);
+end;
+
+procedure TGLContextWGL.SetSwapInterval(const aIntverval: GLint);
+begin
+  wglSwapIntervalEXT(aIntverval);
+end;
+
+procedure TGLContextWGL.Share(const aContext: TGLContext);
+begin
+  wglShareLists(FRC, (aContext as TGLContextWGL).FRC);
+end;
+
+class function TGLContextWGL.ChangeDisplaySettings(const aWidth, aHeight,
+  aBitPerPixel, aFreq: Integer; const aFlags: TglcDisplayFlags): Boolean;
+var
+  dm: TDeviceMode;
+  flags: Cardinal;
+begin
+  FillChar(dm, SizeOf(dm), 0);
+  with dm do begin
+    dmSize             := SizeOf(dm);
+    dmPelsWidth        := aWidth;
+    dmPelsHeight       := aHeight;
+    dmDisplayFrequency := aFreq;
+    dmBitsPerPel       := aBitPerPixel;
+    dmFields           := DM_PELSWIDTH or DM_PELSHEIGHT or DM_BITSPERPEL or DM_DISPLAYFREQUENCY;
+  end;
+  flags := 0; //CDS_TEST;
+  if (dfFullscreen in aFlags) then
+    flags := flags or CDS_FULLSCREEN;
+  result := (Windows.ChangeDisplaySettings(dm, flags) = DISP_CHANGE_SUCCESSFUL);
 end;
 
 end.

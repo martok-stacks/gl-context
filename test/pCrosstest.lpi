@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
     <Version Value="9"/>
@@ -75,7 +75,7 @@
     </SearchPaths>
     <CodeGeneration>
       <TargetCPU Value="i386"/>
-      <TargetOS Value="linux"/>
+      <TargetOS Value="win32"/>
     </CodeGeneration>
     <Linking>
       <Options>

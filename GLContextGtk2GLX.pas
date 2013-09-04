@@ -14,18 +14,23 @@ type
 
   { TGLContextGtk2GLX }
 
-  TGLContextGtk2GLX = class(TGLContext)
+  TGLContextGtk2GLX = class(TglcContext)
   private
     FDisplay: PDisplay;
     FWidget: PGtkWidget;
     FContext: GLXContext;
   protected
     procedure CloseContext; override;
-    procedure OpenContext(pf: TContextPixelFormatSettings); override;
+    procedure OpenContext(pf: TglcContextPixelFormatSettings); override;
   public
     procedure Activate; override;
     procedure Deactivate; override;
     procedure SwapBuffers; override;
+    procedure SetSwapInterval(const aIntverval: GLint); override;
+    procedure Share(const aContext: TGLContext); override;
+
+    class function ChangeDisplaySettings(const aWidth, aHeight,
+      aBitPerPixel, aFreq: Integer; const aFlags: TglcDisplayFlags): Boolean;
   end;
 
 implementation
@@ -33,7 +38,7 @@ implementation
 type
   TGLIntArray = packed array of GLInt;
 
-function CreateOpenGLContextAttrList(UseFB: boolean; pf: TContextPixelFormatSettings): TGLIntArray;
+function CreateOpenGLContextAttrList(UseFB: boolean; pf: TglcContextPixelFormatSettings): TGLIntArray;
 var
   p: integer;
 
@@ -47,24 +52,23 @@ var
   procedure CreateList;
   begin
     if UseFB then begin Add(GLX_X_RENDERABLE); Add(1); end;
-    if pf.DoubleBuffered then
-    begin
+    if pf.DoubleBuffered then begin
       if UseFB then begin
         Add(GLX_DOUBLEBUFFER); Add(1);
       end else
         Add(GLX_DOUBLEBUFFER);
     end;
-    if not UseFB then Add(GLX_RGBA);
-    Add(GLX_RED_SIZE);  Add(1);
-    Add(GLX_GREEN_SIZE);  Add(1);
-    Add(GLX_BLUE_SIZE);  Add(1);
-    Add(GLX_ALPHA_SIZE);  Add(0);//TODO: Add(AlphaBits);
+    if not UseFB and (pf.ColorBits>24) then Add(GLX_RGBA);
+    Add(GLX_RED_SIZE);  Add(8);
+    Add(GLX_GREEN_SIZE);  Add(8);
+    Add(GLX_BLUE_SIZE);  Add(8);
+    if pf.ColorBits>24 then
+      Add(GLX_ALPHA_SIZE);  Add(8);
     Add(GLX_DEPTH_SIZE);  Add(pf.DepthBits);
     Add(GLX_STENCIL_SIZE);  Add(pf.StencilBits);
     Add(GLX_AUX_BUFFERS);  Add(pf.AUXBuffers);
 
-    if pf.MultiSampling > 1 then
-    begin
+    if pf.MultiSampling > 1 then begin
       Add(GLX_SAMPLE_BUFFERS_ARB); Add(1);
       Add(GLX_SAMPLES_ARB); Add(pf.MultiSampling);
     end;
@@ -81,7 +85,7 @@ end;
 
 { TGLContextGtk2GLX }
 
-procedure TGLContextGtk2GLX.OpenContext(pf: TContextPixelFormatSettings);
+procedure TGLContextGtk2GLX.OpenContext(pf: TglcContextPixelFormatSettings);
 var
   attrList: TGLIntArray;
   drawable: PGdkDrawable;
@@ -160,6 +164,25 @@ var
 begin
   drawable:= GTK_WIDGET(FWidget)^.window;
   glXSwapBuffers(FDisplay, GDK_WINDOW_XWINDOW(drawable));
+end;
+
+procedure TGLContextGtk2GLX.SetSwapInterval(const aIntverval: GLint);
+var
+  drawable: PGdkDrawable;
+begin
+  drawable:= GTK_WIDGET(FWidget)^.window;
+  glXSwapIntervalEXT(FDisplay, drawable, aInterval);
+end;
+
+procedure TGLContextGtk2GLX.Share(const aContext: TGLContext);
+begin
+  raise Exception('not yet implemented');
+end;
+
+class function TGLContextGtk2GLX.ChangeDisplaySettings(const aWidth, aHeight,
+  aBitPerPixel, aFreq: Integer; const aFlags: TglcDisplayFlags): Boolean;
+begin
+  raise Exception('not yet implemented');
 end;
 
 end.
