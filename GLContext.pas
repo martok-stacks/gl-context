@@ -54,6 +54,7 @@ type
     class function GetPlatformClass: TGLContextClass;
     class function ChangeDisplaySettings(const aWidth, aHeight,
       aBitPerPixel, aFreq: Integer; const aFlags: TglcDisplayFlags): Boolean; virtual; abstract;
+    class function IsAnyContextActive: boolean; virtual;
 
     constructor Create(aControl: TWinControl);
     destructor Destroy; override;
@@ -63,8 +64,9 @@ type
     procedure BuildContext(FormatSettings: TglcContextPixelFormatSettings);
     procedure Activate; virtual; abstract;
     procedure Deactivate; virtual; abstract;
+    function IsActive: boolean; virtual; abstract;
     procedure SwapBuffers; virtual; abstract;
-    procedure SetSwapInterval(const aIntverval: GLint); virtual; abstract;
+    procedure SetSwapInterval(const aInterval: GLint); virtual; abstract;
     procedure Share(const aContext: TGLContext); virtual; abstract;
   end;
 
@@ -106,6 +108,11 @@ begin
   {$IFDEF LINUX}
   Result:= TGLContextGtk2GLX;
   {$ENDIF}
+end;
+
+class function TGLContext.IsAnyContextActive: boolean;
+begin
+  Result:= GetPlatformClass.IsAnyContextActive;
 end;
 
 constructor TGLContext.Create(aControl: TWinControl);

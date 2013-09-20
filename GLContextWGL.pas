@@ -27,12 +27,14 @@ type
   public
     procedure Activate; override;
     procedure Deactivate; override;
+    function IsActive: boolean; override;
     procedure SwapBuffers; override;
-    procedure SetSwapInterval(const aIntverval: GLint); override;
+    procedure SetSwapInterval(const aInterval: GLint); override;
     procedure Share(const aContext: TGLContext); override;
 
     class function ChangeDisplaySettings(const aWidth, aHeight, aBitPerPixel, aFreq: Integer;
       const aFlags: TglcDisplayFlags): Boolean; override;
+    class function IsAnyContextActive: boolean; override;
   end;
 
 implementation
@@ -169,8 +171,8 @@ begin
       tmpContext.OpenFromPF(pf);
       tmpContext.Activate;
 
-      FillChar(PFList[0], Length(PFList), 0);
-      FillChar(SampleList[0], Length(SampleList), 0);
+      FillChar({%H-}PFList[0], Length(PFList), 0);
+      FillChar({%H-}SampleList[0], Length(SampleList), 0);
       ChoosePF(@PFList[0], @SampleList[0], length(SampleList));
       max := 0;
       for i := 0 to Count-1 do begin
@@ -283,14 +285,20 @@ begin
     DeactivateRenderingContext;
 end;
 
+function TGLContextWGL.IsActive: boolean;
+begin
+  Result:= (FRC = wglGetCurrentContext()) and
+           (FDC = wglGetCurrentDC());
+end;
+
 procedure TGLContextWGL.SwapBuffers;
 begin
   Windows.SwapBuffers(FDC);
 end;
 
-procedure TGLContextWGL.SetSwapInterval(const aIntverval: GLint);
+procedure TGLContextWGL.SetSwapInterval(const aInterval: GLint);
 begin
-  wglSwapIntervalEXT(aIntverval);
+  wglSwapIntervalEXT(aInterval);
 end;
 
 procedure TGLContextWGL.Share(const aContext: TGLContext);
@@ -304,7 +312,7 @@ var
   dm: TDeviceMode;
   flags: Cardinal;
 begin
-  FillChar(dm, SizeOf(dm), 0);
+  FillChar(dm{%H-}, SizeOf(dm), 0);
   with dm do begin
     dmSize             := SizeOf(dm);
     dmPelsWidth        := aWidth;
@@ -317,6 +325,11 @@ begin
   if (dfFullscreen in aFlags) then
     flags := flags or CDS_FULLSCREEN;
   result := (Windows.ChangeDisplaySettings(dm, flags) = DISP_CHANGE_SUCCESSFUL);
+end;
+
+class function TGLContextWGL.IsAnyContextActive: boolean;
+begin
+  Result:= (wglGetCurrentContext()<>0) and (wglGetCurrentDC()<>0);
 end;
 
 end.

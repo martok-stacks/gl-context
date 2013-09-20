@@ -7,30 +7,33 @@ unit GLContextGtk2GLX;
 interface
 
 uses
-  XUtil, XLib, gdk2x, gtk2, gdk2, Gtk2Int, GLContext, dglOpenGL;
+  SysUtils, Controls, XUtil, XLib, gdk2x, gtk2, gdk2, Gtk2Int, GLContext, dglOpenGL;
 
 type
   EGLXError = class(EGLError);
 
   { TGLContextGtk2GLX }
 
-  TGLContextGtk2GLX = class(TglcContext)
+  TGLContextGtk2GLX = class(TGLContext)
   private
     FDisplay: PDisplay;
     FWidget: PGtkWidget;
     FContext: GLXContext;
+    FRenderControl: TCustomControl;
   protected
     procedure CloseContext; override;
     procedure OpenContext(pf: TglcContextPixelFormatSettings); override;
   public
     procedure Activate; override;
     procedure Deactivate; override;
+    function IsActive: boolean; override;
     procedure SwapBuffers; override;
-    procedure SetSwapInterval(const aIntverval: GLint); override;
+    procedure SetSwapInterval(const aInterval: GLint); override;
     procedure Share(const aContext: TGLContext); override;
 
     class function ChangeDisplaySettings(const aWidth, aHeight,
-      aBitPerPixel, aFreq: Integer; const aFlags: TglcDisplayFlags): Boolean;
+      aBitPerPixel, aFreq: Integer; const aFlags: TglcDisplayFlags): Boolean; override;
+    class function IsAnyContextActive: boolean; override;
   end;
 
 implementation
@@ -91,7 +94,21 @@ var
   drawable: PGdkDrawable;
   vi: PXVisualInfo;
 begin
-  FWidget:= {%H-}PGtkWidget(PtrUInt(Control.Handle));
+  {
+    Most widgets inherit the drawable of their parent. In contrast to Windows, descending from
+    TWinControl does not mean it's actually always a window of its own.
+    Famous example: TPanel is just a frame painted on a canvas.
+    We need to create something where we know it works here to make sure.
+  }
+  FRenderControl:= TCustomControl.Create(Control);
+  try
+    FRenderControl.Parent:= Control;
+    FRenderControl.Align:= alClient;
+  except
+    FreeAndNil(FRenderControl);
+    raise;
+  end;
+  FWidget:= {%H-}PGtkWidget(PtrUInt(FRenderControl.Handle));
   gtk_widget_realize(FWidget);
   drawable:= GTK_WIDGET(FWidget)^.window;
 
@@ -140,6 +157,7 @@ end;
 procedure TGLContextGtk2GLX.CloseContext;
 begin
   glXDestroyContext(FDisplay, FContext);
+  FreeAndNil(FRenderControl);
 end;
 
 procedure TGLContextGtk2GLX.Activate;
@@ -158,6 +176,12 @@ begin
   glXMakeCurrent(FDisplay, GDK_WINDOW_XWINDOW(GTK_WIDGET(FWidget)^.window), nil);
 end;
 
+function TGLContextGtk2GLX.IsActive: boolean;
+begin
+  Result:= (FContext = glXGetCurrentContext()) and
+           (GDK_WINDOW_XWINDOW(GTK_WIDGET(FWidget)^.window) = glXGetCurrentDrawable());
+end;
+
 procedure TGLContextGtk2GLX.SwapBuffers;
 var
   drawable: PGdkDrawable;
@@ -166,24 +190,30 @@ begin
   glXSwapBuffers(FDisplay, GDK_WINDOW_XWINDOW(drawable));
 end;
 
-procedure TGLContextGtk2GLX.SetSwapInterval(const aIntverval: GLint);
+procedure TGLContextGtk2GLX.SetSwapInterval(const aInterval: GLint);
 var
   drawable: PGdkDrawable;
 begin
   drawable:= GTK_WIDGET(FWidget)^.window;
-  glXSwapIntervalEXT(FDisplay, drawable, aInterval);
+  if GLX_EXT_swap_control then
+    glXSwapIntervalEXT(FDisplay, GDK_WINDOW_XWINDOW(drawable), aInterval);
 end;
 
 procedure TGLContextGtk2GLX.Share(const aContext: TGLContext);
 begin
-  raise Exception('not yet implemented');
+  raise Exception.Create('not yet implemented');
 end;
 
 class function TGLContextGtk2GLX.ChangeDisplaySettings(const aWidth, aHeight,
   aBitPerPixel, aFreq: Integer; const aFlags: TglcDisplayFlags): Boolean;
 begin
-  raise Exception('not yet implemented');
+  raise Exception.Create('not yet implemented');
+end;
+
+class function TGLContextGtk2GLX.IsAnyContextActive: boolean;
+begin
+  Result:= (glXGetCurrentContext()<>nil) and (glXGetCurrentDrawable()<>0);
 end;
 
 end.
-
+
