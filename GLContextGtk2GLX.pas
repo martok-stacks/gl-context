@@ -85,6 +85,26 @@ begin
   CreateList;
 end;
 
+function FBglXChooseVisual(dpy:PDisplay; screen:longint; attrib_list:Plongint):PXVisualInfo;
+type
+  PGLXFBConfig = ^GLXFBConfig;
+var
+  FBConfigsCount: integer;
+  FBConfigs: PGLXFBConfig;
+  FBConfig: GLXFBConfig;
+begin
+  Result:= nil;
+  FBConfigsCount:=0;
+  FBConfigs:= glXChooseFBConfig(dpy, screen, attrib_list, @FBConfigsCount);
+  if FBConfigsCount = 0 then
+    raise EGLXError.Create('Could not find FB config');
+
+  { just choose the first FB config from the FBConfigs list.
+    More involved selection possible. }
+  FBConfig := FBConfigs^;
+  Result:=glXGetVisualFromFBConfig(dpy, FBConfig);
+end;
+
 
 { TGLContextGtk2GLX }
 
@@ -125,33 +145,13 @@ begin
     raise EGLXError.Create('Failed to find Visual');
 
   try
-    FContext := glXCreateContext(FDisplay, vi, nil, false);
+    FContext := glXCreateContext(FDisplay, vi, nil, true);
   finally
     XFree(vi);
   end;
 
   if (FContext = nil) then
     raise EGLXError.Create('Failed to create Context');
-end;
-
-function FBglXChooseVisual(dpy:PDisplay; screen:longint; attrib_list:Plongint):PXVisualInfo;
-type
-  PGLXFBConfig = ^GLXFBConfig;
-var
-  FBConfigsCount: integer;
-  FBConfigs: PGLXFBConfig;
-  FBConfig: GLXFBConfig;
-begin
-  Result:= nil;
-  FBConfigsCount:=0;
-  FBConfigs:= glXChooseFBConfig(dpy, screen, attrib_list, @FBConfigsCount);
-  if FBConfigsCount = 0 then
-    raise EGLXError.Create('Could not find FB config');
-
-  { just choose the first FB config from the FBConfigs list.
-    More involved selection possible. }
-  FBConfig := FBConfigs^;
-  Result:=glXGetVisualFromFBConfig(dpy, FBConfig);
 end;
 
 procedure TGLContextGtk2GLX.CloseContext;
@@ -173,13 +173,13 @@ end;
 
 procedure TGLContextGtk2GLX.Deactivate;
 begin
-  glXMakeCurrent(FDisplay, GDK_WINDOW_XWINDOW(GTK_WIDGET(FWidget)^.window), nil);
+  glXMakeCurrent(FDisplay, GDK_DRAWABLE_XID(GTK_WIDGET(FWidget)^.window), nil);
 end;
 
 function TGLContextGtk2GLX.IsActive: boolean;
 begin
   Result:= (FContext = glXGetCurrentContext()) and
-           (GDK_WINDOW_XWINDOW(GTK_WIDGET(FWidget)^.window) = glXGetCurrentDrawable());
+           (GDK_DRAWABLE_XID(GTK_WIDGET(FWidget)^.window) = glXGetCurrentDrawable());
 end;
 
 procedure TGLContextGtk2GLX.SwapBuffers;
@@ -187,7 +187,7 @@ var
   drawable: PGdkDrawable;
 begin
   drawable:= GTK_WIDGET(FWidget)^.window;
-  glXSwapBuffers(FDisplay, GDK_WINDOW_XWINDOW(drawable));
+  glXSwapBuffers(FDisplay, GDK_DRAWABLE_XID(drawable));
 end;
 
 procedure TGLContextGtk2GLX.SetSwapInterval(const aInterval: GLint);
