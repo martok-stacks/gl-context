@@ -30,6 +30,7 @@ type
     function IsActive: boolean; override;
     procedure SwapBuffers; override;
     procedure SetSwapInterval(const aInterval: GLint); override;
+    function GetSwapInterval: GLint; override;
     procedure Share(const aContext: TGLContext); override;
 
     class function ChangeDisplaySettings(const aWidth, aHeight, aBitPerPixel, aFreq: Integer;
@@ -299,6 +300,11 @@ end;
 procedure TGLContextWGL.SetSwapInterval(const aInterval: GLint);
 begin
   wglSwapIntervalEXT(aInterval);
+end;
+
+function TGLContextWGL.GetSwapInterval: GLint;
+begin
+  result := wglGetSwapIntervalEXT();
 end;
 
 procedure TGLContextWGL.Share(const aContext: TGLContext);

@@ -38,6 +38,8 @@ type
   TGLContext = class
   private
     FControl: TWinControl;
+    function GetEnableVSync: Boolean;
+    procedure SetEnableVSync(aValue: Boolean);
   protected
     procedure OpenContext(FormatSettings: TglcContextPixelFormatSettings); virtual; abstract;
     procedure CloseContext; virtual; abstract;
@@ -67,6 +69,7 @@ type
     function IsActive: boolean; virtual; abstract;
     procedure SwapBuffers; virtual; abstract;
     procedure SetSwapInterval(const aInterval: GLint); virtual; abstract;
+    function GetSwapInterval: GLint; virtual; abstract;
     procedure Share(const aContext: TGLContext); virtual; abstract;
   end;
 
@@ -82,12 +85,24 @@ uses
   ;
 
 
-{ TGLContext }
+{ TGLontext }
+
+function TGLContext.GetEnableVSync: Boolean;
+begin
+  result := (GetSwapInterval() <> 0);
+end;
+
+procedure TGLContext.SetEnableVSync(aValue: Boolean);
+begin
+  if aValue then
+    SetSwapInterval(1)
+  else
+    SetSwapInterval(0);
+end;
 
 class function TGLContext.MakePF(DoubleBuffered: boolean; Stereo: boolean;
   MultiSampling: TMultiSample; ColorBits: Integer; DepthBits: Integer; StencilBits: Integer;
-  AccumBits: Integer; AuxBuffers: Integer; Layer: Integer
-  ): TglcContextPixelFormatSettings;
+  AccumBits: Integer; AuxBuffers: Integer; Layer: Integer): TglcContextPixelFormatSettings;
 begin
   Result.DoubleBuffered:= DoubleBuffered;
   Result.Stereo:= Stereo;
