@@ -7,7 +7,7 @@ unit GLContextGtk2GLX;
 interface
 
 uses
-  SysUtils, Controls, XUtil, XLib, gdk2x, gtk2, gdk2, Gtk2Int, uglcContext, dglOpenGL,
+  SysUtils, Controls, XUtil, XLib, gdk2x, gtk2, gdk2, Gtk2Int, GLContext, dglOpenGL,
   LMessages;
 
 type
@@ -359,9 +359,9 @@ begin
   }
   FRenderControl := TRenderControl.Create(Control);
   try
-    FRenderControl.Target := Control;
     FRenderControl.Parent := Control;
     FRenderControl.Align  := alClient;
+    FRenderControl.Target := Control;
   except
     FreeAndNil(FRenderControl);
     raise;
