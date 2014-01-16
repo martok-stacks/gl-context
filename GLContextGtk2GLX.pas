@@ -4,17 +4,19 @@ unit GLContextGtk2GLX;
 {$mode delphi}
 {$ENDIF}
 
-{.$DEFINE USE_FBGLX}
+{$DEFINE USE_FBGLX}
 {$DEFINE GDK_SET_COLORMAP}
 
 interface
 
 uses
-  SysUtils, Controls, XUtil, XLib, gdk2x, gtk2, gdk2, Gtk2Int, GLContext, dglOpenGL,
-  LMessages;
+  SysUtils, Controls, LCLType, XUtil, XLib, gdk2x, gtk2, gdk2, Gtk2Int, GLContext, dglOpenGL,
+  LMessages, glib2;
 
 type
   EGLXError = class(EGLError);
+
+  { TRenderControl }
 
   TRenderControl = class(TCustomControl)
   private
@@ -54,6 +56,7 @@ implementation
 type
   TGLIntArray = packed array of GLInt;
 
+{$region messages -fold}
 procedure TRenderControl.WndProc(var Message: TLMessage);
 var
   handled: Boolean;
@@ -281,6 +284,8 @@ begin
     inherited WndProc(Message);     
 end;
 
+{$endregion}
+
 function CreateOpenGLContextAttrList(UseFB: boolean; pf: TglcContextPixelFormatSettings): TGLIntArray;
 var
   p: integer;
@@ -302,6 +307,10 @@ var
         Add(GLX_DOUBLEBUFFER);
     end;
     if not UseFB and (pf.ColorBits>24) then Add(GLX_RGBA);
+    if UseFB then begin
+      Add(GLX_DRAWABLE_TYPE);
+      Add(GLX_WINDOW_BIT);
+    end;
     Add(GLX_RED_SIZE);  Add(8);
     Add(GLX_GREEN_SIZE);  Add(8);
     Add(GLX_BLUE_SIZE);  Add(8);
@@ -347,6 +356,8 @@ end;
 
 
 { TGLContextGtk2GLX }
+
+{$region debug -fold}
 
 function gdk_x11_visual_get_xvinfo (scr:longint; xdisplay: PXDisplay; visual: PGdkVisual): PXVisualInfo;
 var
@@ -485,6 +496,8 @@ begin
   DebugglXGetConfig(vi, dpy);
 end;
 
+{$endregion}
+
 procedure TGLContextGtk2GLX.OpenContext(pf: TglcContextPixelFormatSettings);
 var
   attrList: TGLIntArray;
@@ -548,8 +561,8 @@ begin
     FRenderControl := TRenderControl.Create(Control);
     try
       FRenderControl.Parent := Control;
-      FRenderControl.Align  := alClient;
-      FRenderControl.Target := Control;
+      {FRenderControl.Align  := alClient;
+      FRenderControl.Target := Control;}
     except
       FreeAndNil(FRenderControl);
       raise;
@@ -565,20 +578,25 @@ begin
     cmap  :=gdk_colormap_get_system;
     gdkvis:=gdk_colormap_get_visual(cmap);
     WriteLn('System Colormap: ', hexstr(cmap));
-    gdkvisp:= PGdkVisualPrivate(gdkvis);
     WriteLn('System Colormap VisualID: ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdkvis)), 4));
     if XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdkvis))<>vi^.visual.visualid then begin
       gdkvis:=gdkx_visual_get(vi^.visualid);
       WriteLn('Want VisualID: ', hexstr(vi^.visualid, 4), ' got ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdkvis)), 4));
       cmap:=gdk_colormap_new(gdkvis, false);
       WriteLn('New Colormap: ', hexstr(cmap));
+      WriteLn('New Colormap VisualID: ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdkvis)), 4));
     end;
 
     gtk_widget_set_colormap(FWidget, cmap);
+    gtk_widget_set_visual(FWidget, gdkvis);
     WriteLn('Colormap for Widget set to ', hexstr(cmap));
 {$ENDIF}
 
+    WriteLn('Colormap for Widget before realize ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdk_colormap_get_visual(gtk_widget_get_colormap(FWidget)))), 4));
+    WriteLn('Widget before realize ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gtk_widget_get_visual(FWidget))), 4));
     gtk_widget_realize(FWidget);
+    WriteLn('Colormap for Widget realized as ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdk_colormap_get_visual(gtk_widget_get_colormap(FWidget)))), 4));
+    WriteLn('Widget realized as ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gtk_widget_get_visual(FWidget))), 4));
     drawable:= GTK_WIDGET(FWidget)^.window;
 
     WriteLn('Real Drawable: ', hexstr(drawable));
@@ -587,7 +605,7 @@ begin
     WriteLn('Real XDisplay: ', hexstr(FDisplay));
 
 
-    DebugDrawableAndVisuals(drawable, FDisplay, vi);
+    //DebugDrawableAndVisuals(drawable, FDisplay, vi);
   finally
     XFree(vi);
   end;
@@ -654,5 +672,16 @@ begin
   Result:= (glXGetCurrentContext()<>nil) and (glXGetCurrentDrawable()<>0);
 end;
 
+procedure glib_log(log_domain:Pgchar; log_level:TGLogLevelFlags; TheMessage:Pgchar; user_data:gpointer);cdecl;
+begin
+  WriteLn('#glib# [',log_domain,'] ', theMessage);
+end;
+
+initialization
+  g_log_set_handler('GLib',G_LOG_LEVEL_MASK, @glib_log, nil);
+  g_log_set_handler(nil,G_LOG_LEVEL_MASK, @glib_log, nil);
+  g_log_set_handler('Gdk',G_LOG_LEVEL_MASK, @glib_log, nil);
+  g_log_set_handler('Gtk',G_LOG_LEVEL_MASK, @glib_log, nil);
+  g_warning('test message');
 end.
 
