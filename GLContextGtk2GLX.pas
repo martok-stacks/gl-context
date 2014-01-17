@@ -7,13 +7,15 @@ unit GLContextGtk2GLX;
 interface
 
 uses
-  SysUtils, Controls, XUtil, XLib, gdk2x, gtk2, gdk2, Gtk2Int, GLContext, dglOpenGL,
-  LMessages;
+  SysUtils, Controls, GLContext, LCLType, XUtil, XLib, gdk2x, gtk2, gdk2, dglOpenGL,
+  LMessages, GLContextGtkCustomVisual;
 
 type
   EGLXError = class(EGLError);
 
-  TRenderControl = class(TCustomControl)
+  { TRenderControl }
+
+  TRenderControl = class(TCustomVisualControl)
   private
     fTarget: TWinControl;
   protected
@@ -51,6 +53,7 @@ implementation
 type
   TGLIntArray = packed array of GLInt;
 
+{$region messages -fold}
 procedure TRenderControl.WndProc(var Message: TLMessage);
 var
   handled: Boolean;
@@ -278,6 +281,8 @@ begin
     inherited WndProc(Message);     
 end;
 
+{$endregion}
+
 function CreateOpenGLContextAttrList(UseFB: boolean; pf: TglcContextPixelFormatSettings): TGLIntArray;
 var
   p: integer;
@@ -299,6 +304,10 @@ var
         Add(GLX_DOUBLEBUFFER);
     end;
     if not UseFB and (pf.ColorBits>24) then Add(GLX_RGBA);
+    if UseFB then begin
+      Add(GLX_DRAWABLE_TYPE);
+      Add(GLX_WINDOW_BIT);
+    end;
     Add(GLX_RED_SIZE);  Add(8);
     Add(GLX_GREEN_SIZE);  Add(8);
     Add(GLX_BLUE_SIZE);  Add(8);
@@ -334,7 +343,7 @@ begin
   FBConfigsCount:=0;
   FBConfigs:= glXChooseFBConfig(dpy, screen, attrib_list, @FBConfigsCount);
   if FBConfigsCount = 0 then
-    raise EGLXError.Create('Could not find FB config');
+    exit;
 
   { just choose the first FB config from the FBConfigs list.
     More involved selection possible. }
@@ -352,44 +361,75 @@ var
   vi: PXVisualInfo;
 begin
   {
-    Most widgets inherit the drawable of their parent. In contrast to Windows, descending from
-    TWinControl does not mean it's actually always a window of its own.
-    Famous example: TPanel is just a frame painted on a canvas.
-    We need to create something where we know it works here to make sure.
+    Temporary (realized) widget to get to display
   }
-  FRenderControl := TRenderControl.Create(Control);
-  try
-    FRenderControl.Parent := Control;
-    FRenderControl.Align  := alClient;
-    FRenderControl.Target := Control;
-  except
-    FreeAndNil(FRenderControl);
-    raise;
-  end;
-  FWidget:= {%H-}PGtkWidget(PtrUInt(FRenderControl.Handle));
+  FWidget:= {%H-}PGtkWidget(PtrUInt(Control.Handle));
   gtk_widget_realize(FWidget);
   drawable:= GTK_WIDGET(FWidget)^.window;
 
   FDisplay:= GDK_WINDOW_XDISPLAY(drawable);
 
-  attrList:=CreateOpenGLContextAttrList(false, pf);
-  vi:= glXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
-  if vi=nil then begin
-    pf.MultiSampling:= 1;
+  {
+    Find a suitable visual from PixelFormat using GLX 1.3 FBConfigs or
+    old-style Visuals
+  }
+  if Assigned(glXChooseFBConfig) then begin
+    attrList:=CreateOpenGLContextAttrList(true, pf);
+    vi:= FBglXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
+    if vi=nil then begin
+      pf.MultiSampling:= 1;
+      attrList:=CreateOpenGLContextAttrList(true, pf);
+      vi:= FBglXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
+    end;
+  end else begin
     attrList:=CreateOpenGLContextAttrList(false, pf);
     vi:= glXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
+    if vi=nil then begin
+      pf.MultiSampling:= 1;
+      attrList:=CreateOpenGLContextAttrList(false, pf);
+      vi:= glXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
+    end;
   end;
+
   if vi=nil then
     raise EGLXError.Create('Failed to find Visual');
 
+  {
+    Create Context
+  }
   try
     FContext := glXCreateContext(FDisplay, vi, nil, true);
+
+    if (FContext = nil) then
+      raise EGLXError.Create('Failed to create Context');
+
+    {
+      Most widgets inherit the drawable of their parent. In contrast to Windows, descending from
+      TWinControl does not mean it's actually always a window of its own.
+      Famous example: TPanel is just a frame painted on a canvas.
+      Also, the LCL does somethin weird to colormaps in window creation, so we have
+      to use a custom widget here to have full control about visual selection.
+    }
+    FRenderControl := TRenderControl.Create(Control, vi^.visual.visualid);
+    try
+      FRenderControl.Parent := Control;
+      FRenderControl.Align  := alClient;
+      FRenderControl.Target := Control;
+    except
+      FreeAndNil(FRenderControl);
+      raise;
+    end;
+
+    {
+      Real Widget handle, unrealized!!!
+    }
+    FWidget:= FRenderControl.Widget;
+    gtk_widget_realize(FWidget);
+    drawable:= GTK_WIDGET(FWidget)^.window;
+    FDisplay:= GDK_WINDOW_XDISPLAY(drawable);
   finally
     XFree(vi);
   end;
-
-  if (FContext = nil) then
-    raise EGLXError.Create('Failed to create Context');
 end;
 
 procedure TGLContextGtk2GLX.CloseContext;
