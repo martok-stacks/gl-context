@@ -13,6 +13,7 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    procedure FormClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -51,6 +52,11 @@ begin
 end;
 
 { TForm1 }
+
+procedure TForm1.FormClick(Sender: TObject);
+begin
+  ShowMessage('Click!');
+end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
@@ -115,4 +121,4 @@ begin
 end;
 
 end.
-
+

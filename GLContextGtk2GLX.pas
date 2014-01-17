@@ -4,21 +4,18 @@ unit GLContextGtk2GLX;
 {$mode delphi}
 {$ENDIF}
 
-{$DEFINE USE_FBGLX}
-{$DEFINE GDK_SET_COLORMAP}
-
 interface
 
 uses
-  SysUtils, Controls, LCLType, XUtil, XLib, gdk2x, gtk2, gdk2, Gtk2Int, GLContext, dglOpenGL,
-  LMessages, glib2;
+  SysUtils, Controls, GLContext, LCLType, XUtil, XLib, gdk2x, gtk2, gdk2, dglOpenGL,
+  LMessages, GLContextGtkCustomVisual;
 
 type
   EGLXError = class(EGLError);
 
   { TRenderControl }
 
-  TRenderControl = class(TCustomControl)
+  TRenderControl = class(TCustomVisualControl)
   private
     fTarget: TWinControl;
   protected
@@ -357,189 +354,43 @@ end;
 
 { TGLContextGtk2GLX }
 
-{$region debug -fold}
-
-function gdk_x11_visual_get_xvinfo (scr:longint; xdisplay: PXDisplay; visual: PGdkVisual): PXVisualInfo;
-var
-  xvinfo_template: TXVisualInfo;
-  xvinfo_list: PXVisualInfo;
-  nitems_return: integer;
-begin
-  xvinfo_template.visualid:= XVisualIDFromVisual (gdk_x11_visual_get_xvisual(visual));
-  xvinfo_template.screen:=scr;
-
-  xvinfo_list:= XGetVisualInfo (xdisplay,
-                                VisualIDMask or VisualScreenMask,
-                                @xvinfo_template,
-                                @nitems_return);
-
-  { Returned XVisualInfo needs to be unique }
-  if (nitems_return<>1) then
-    Result:= nil
-  else
-    Result:= xvinfo_list;
-end;
-
-procedure DebugglxGetConfig(vi: PXVisualInfo; dpy: PXDisplay);
-var
-  Value: GLint;
-const
-  GLX_BAD_SCREEN      =1;
-  GLX_BAD_ATTRIBUTE   =2;
-  GLX_NO_EXTENSION    =3;
-  GLX_BAD_VISUAL      =4;
-  GLX_BAD_CONTEXT     =5;
-  GLX_BAD_VALUE       =6;
-  GLX_BAD_ENUM        =7;
-
-  function Query(attrib: GLenum): boolean;
-  var
-    e: integer;
-  begin
-    Result:= false;
-    e:= glXGetConfig(dpy, vi, attrib, @Value);
-    case e of
-      GLX_NO_EXTENSION: WriteLn('GLX_NO_EXTENSION');
-      GLX_BAD_SCREEN: WriteLn('GLX_BAD_SCREEN');
-      GLX_BAD_ATTRIBUTE: WriteLn('GLX_BAD_ATTRIBUTE');
-      GLX_BAD_VISUAL: WriteLn('GLX_BAD_VISUAL && GLX_USE_GL');
-      GLX_BAD_CONTEXT: WriteLn('GLX_BAD_CONTEXT');
-      GLX_BAD_VALUE: WriteLn('GLX_BAD_VALUE');
-      GLX_BAD_ENUM: WriteLn('GLX_BAD_ENUM');
-      0: Result:= true;
-    else
-      WriteLn('Unknown Error: ', e);
-    end;
-  end;
-
-begin
-  if Query(GLX_USE_GL) then
-    WriteLn('Using GL')
-  else
-    exit;
-
-  Write('Bits per Pixel: '); if Query(GLX_BUFFER_SIZE) then WriteLn(Value);
-  Write('Bits per R: '); if Query(GLX_RED_SIZE) then WriteLn(Value);
-  Write('Bits per G: '); if Query(GLX_GREEN_SIZE) then WriteLn(Value);
-  Write('Bits per B: '); if Query(GLX_BLUE_SIZE) then WriteLn(Value);
-  Write('Bits per A: '); if Query(GLX_ALPHA_SIZE) then WriteLn(Value);
-  Write('FB Level: '); if Query(GLX_LEVEL) then WriteLn(Value);
-  Write('Is RGBA: '); if Query(GLX_RGBA) then WriteLn(BoolToStr(Value=GL_TRUE, true));
-  Write('Is DoubleBuffered: '); if Query(GLX_DOUBLEBUFFER) then WriteLn(BoolToStr(Value=GL_TRUE, true));
-  Write('Is Stereo: '); if Query(GLX_STEREO) then WriteLn(BoolToStr(Value=GL_TRUE, true));
-  Write('Aux Buffers: '); if Query(GLX_AUX_BUFFERS) then WriteLn(Value);
-  Write('Depth Bits: '); if Query(GLX_DEPTH_SIZE) then WriteLn(Value);
-  Write('Stencil Bits: '); if Query(GLX_STENCIL_SIZE) then WriteLn(Value);
-  Write('Accum Bits R: '); if Query(GLX_ACCUM_RED_SIZE) then WriteLn(Value);
-  Write('Accum Bits G: '); if Query(GLX_ACCUM_GREEN_SIZE) then WriteLn(Value);
-  Write('Accum Bits B: '); if Query(GLX_ACCUM_BLUE_SIZE) then WriteLn(Value);
-  Write('Accum Bits A: '); if Query(GLX_ACCUM_ALPHA_SIZE) then WriteLn(Value);
-end;
-
-procedure DebugXVisualInfo(const vi: PXVisualInfo);
-begin
-  with vi^ do begin
-    WriteLn('Screen: ', screen, ' VisualID: ', hexStr(visualid,4));
-    WriteLn('Class: ', _class);
-    Writeln('Bits RGB: ', bits_per_rgb);
-    Writeln('Depth: ', depth);
-    WriteLn(Format('Masks (RGB): %.8x %.8x, %.8x', [red_mask, green_mask,blue_mask]));
-    Writeln('Colormap Size: ', colormap_Size);
-  end;
-end;
-
-procedure DebugDrawableAndVisuals(const drawable: PGdkDrawable; const dpy: PXDisplay; const vi: PXVisualInfo);
-var
-  gv: PGdkVisual;
-  gvi: PXVisualInfo;
-begin
-  WriteLn('==== GDKDrawable GDKVisual ====');
-  gv:= gdk_drawable_get_visual(drawable);
-  with gv^ do begin
-    Write('Type: ');
-    case TheType of
-     GDK_VISUAL_STATIC_GRAY: Write('GDK_VISUAL_STATIC_GRAY');
-     GDK_VISUAL_GRAYSCALE: Write('GDK_VISUAL_GRAYSCALE');
-     GDK_VISUAL_STATIC_COLOR: Write('GDK_VISUAL_STATIC_COLOR');
-     GDK_VISUAL_PSEUDO_COLOR: Write('GDK_VISUAL_PSEUDO_COLOR');
-     GDK_VISUAL_TRUE_COLOR: Write('GDK_VISUAL_TRUE_COLOR');
-     GDK_VISUAL_DIRECT_COLOR: Write('GDK_VISUAL_DIRECT_COLOR');
-    end;
-    WriteLn('(',Ord(TheType),')');
-    WriteLn('Depth: ', depth);
-    Write('ByteOrder: ');
-    Case byte_order of
-     GDK_LSB_FIRST: Write('GDK_LSB_FIRST');
-     GDK_MSB_FIRST: Write('GDK_MSB_FIRST');
-    end;
-    WriteLn('(',Ord(byte_order),')');
-    WriteLn('Colormap entries: ', colormap_size);
-    WriteLn('Bits RGB: ', bits_per_rgb);
-    WriteLn(Format('Mask R: %.8x << %d @ %d', [red_mask, red_shift, red_prec]));
-    WriteLn(Format('Mask G: %.8x << %d @ %d', [green_mask, green_shift, green_prec]));
-    WriteLn(Format('Mask B: %.8x << %d @ %d', [blue_mask, blue_shift, blue_prec]));
-  end;
-
-  WriteLn('==== GDKVisual XVisual ====');
-  gvi:= gdk_x11_visual_get_xvinfo(DefaultScreen(dpy), dpy, gv);
-  if Assigned(gvi) then
-    DebugXVisualInfo(gvi)
-  else begin
-    WriteLn('(Can''t get)');
-    WriteLn('XVisualID: ', hexstr(XVisualIDFromVisual (gdk_x11_visual_get_xvisual(gv)), 4));
-  end;
-
-  WriteLn('==== glXChooseVisual XVisualInfo ====');
-  DebugXVisualInfo(vi);
-
-  WriteLn('==== glXGetConfig ====');
-  DebugglXGetConfig(vi, dpy);
-end;
-
-{$endregion}
-
 procedure TGLContextGtk2GLX.OpenContext(pf: TglcContextPixelFormatSettings);
 var
   attrList: TGLIntArray;
   drawable: PGdkDrawable;
   vi: PXVisualInfo;
-  cmap: PGdkColormap;
-  gdkvis: PGdkVisual;
-  gdkvisp: PGdkVisualPrivate;
 begin
   {
     Temporary (realized) widget to get to display
   }
   FWidget:= {%H-}PGtkWidget(PtrUInt(Control.Handle));
-  WriteLn('Temporary Widget: ', hexStr(FWidget));
   gtk_widget_realize(FWidget);
   drawable:= GTK_WIDGET(FWidget)^.window;
 
-  WriteLn('Temporary Drawable: ', hexstr(drawable));
   FDisplay:= GDK_WINDOW_XDISPLAY(drawable);
 
-  WriteLn('Have XDisplay: ', hexstr(FDisplay));
   {
-    Find a suitable visual from PixelFormat
+    Find a suitable visual from PixelFormat using GLX 1.3 FBConfigs or
+    old-style Visuals
   }
-{$IFDEF USE_FBGLX}
-  attrList:=CreateOpenGLContextAttrList(true, pf);
-  vi:= FBglXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
-  if vi=nil then begin
-    pf.MultiSampling:= 1;
+  if Assigned(glXChooseFBConfig) then begin
     attrList:=CreateOpenGLContextAttrList(true, pf);
     vi:= FBglXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
-  end;
-{$ELSE}
-  attrList:=CreateOpenGLContextAttrList(false, pf);
-  vi:= glXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
-  if vi=nil then begin
-    pf.MultiSampling:= 1;
+    if vi=nil then begin
+      pf.MultiSampling:= 1;
+      attrList:=CreateOpenGLContextAttrList(true, pf);
+      vi:= FBglXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
+    end;
+  end else begin
     attrList:=CreateOpenGLContextAttrList(false, pf);
     vi:= glXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
+    if vi=nil then begin
+      pf.MultiSampling:= 1;
+      attrList:=CreateOpenGLContextAttrList(false, pf);
+      vi:= glXChooseVisual(FDisplay, DefaultScreen(FDisplay), @attrList[0]);
+    end;
   end;
-{$ENDIF}
-  WriteLn('XVID:', hexstr(vi^.visualid, 4));
+
   if vi=nil then
     raise EGLXError.Create('Failed to find Visual');
 
@@ -556,13 +407,14 @@ begin
       Most widgets inherit the drawable of their parent. In contrast to Windows, descending from
       TWinControl does not mean it's actually always a window of its own.
       Famous example: TPanel is just a frame painted on a canvas.
-      We need to create something where we know it works here to make sure.
+      Also, the LCL does somethin weird to colormaps in window creation, so we have
+      to use a custom widget here to have full control about visual selection.
     }
-    FRenderControl := TRenderControl.Create(Control);
+    FRenderControl := TRenderControl.Create(Control, vi^.visual.visualid);
     try
       FRenderControl.Parent := Control;
-      {FRenderControl.Align  := alClient;
-      FRenderControl.Target := Control;}
+      FRenderControl.Align  := alClient;
+      FRenderControl.Target := Control;
     except
       FreeAndNil(FRenderControl);
       raise;
@@ -571,41 +423,10 @@ begin
     {
       Real Widget handle, unrealized!!!
     }
-    FWidget:= {%H-}PGtkWidget(PtrUInt(FRenderControl.Handle));
-    WriteLn('Real Widget: ', hexStr(FWidget));
-
-{$IFDEF GDK_SET_COLORMAP}
-    cmap  :=gdk_colormap_get_system;
-    gdkvis:=gdk_colormap_get_visual(cmap);
-    WriteLn('System Colormap: ', hexstr(cmap));
-    WriteLn('System Colormap VisualID: ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdkvis)), 4));
-    if XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdkvis))<>vi^.visual.visualid then begin
-      gdkvis:=gdkx_visual_get(vi^.visualid);
-      WriteLn('Want VisualID: ', hexstr(vi^.visualid, 4), ' got ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdkvis)), 4));
-      cmap:=gdk_colormap_new(gdkvis, false);
-      WriteLn('New Colormap: ', hexstr(cmap));
-      WriteLn('New Colormap VisualID: ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdkvis)), 4));
-    end;
-
-    gtk_widget_set_colormap(FWidget, cmap);
-    gtk_widget_set_visual(FWidget, gdkvis);
-    WriteLn('Colormap for Widget set to ', hexstr(cmap));
-{$ENDIF}
-
-    WriteLn('Colormap for Widget before realize ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdk_colormap_get_visual(gtk_widget_get_colormap(FWidget)))), 4));
-    WriteLn('Widget before realize ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gtk_widget_get_visual(FWidget))), 4));
+    FWidget:= FRenderControl.Widget;
     gtk_widget_realize(FWidget);
-    WriteLn('Colormap for Widget realized as ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gdk_colormap_get_visual(gtk_widget_get_colormap(FWidget)))), 4));
-    WriteLn('Widget realized as ', hexstr(XVisualIDFromVisual(gdk_x11_visual_get_xvisual(gtk_widget_get_visual(FWidget))), 4));
     drawable:= GTK_WIDGET(FWidget)^.window;
-
-    WriteLn('Real Drawable: ', hexstr(drawable));
     FDisplay:= GDK_WINDOW_XDISPLAY(drawable);
-
-    WriteLn('Real XDisplay: ', hexstr(FDisplay));
-
-
-    //DebugDrawableAndVisuals(drawable, FDisplay, vi);
   finally
     XFree(vi);
   end;
@@ -672,16 +493,5 @@ begin
   Result:= (glXGetCurrentContext()<>nil) and (glXGetCurrentDrawable()<>0);
 end;
 
-procedure glib_log(log_domain:Pgchar; log_level:TGLogLevelFlags; TheMessage:Pgchar; user_data:gpointer);cdecl;
-begin
-  WriteLn('#glib# [',log_domain,'] ', theMessage);
-end;
-
-initialization
-  g_log_set_handler('GLib',G_LOG_LEVEL_MASK, @glib_log, nil);
-  g_log_set_handler(nil,G_LOG_LEVEL_MASK, @glib_log, nil);
-  g_log_set_handler('Gdk',G_LOG_LEVEL_MASK, @glib_log, nil);
-  g_log_set_handler('Gtk',G_LOG_LEVEL_MASK, @glib_log, nil);
-  g_warning('test message');
 end.
 
