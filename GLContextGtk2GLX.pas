@@ -410,10 +410,10 @@ begin
       Also, the LCL does somethin weird to colormaps in window creation, so we have
       to use a custom widget here to have full control about visual selection.
     }
-    FRenderControl := TRenderControl.Create(Control, vi^.visual.visualid);
+    FRenderControl:= TRenderControl.Create(Control, vi^.visual^.visualid);
     try
       FRenderControl.Parent := Control;
-      FRenderControl.Align  := alClient;
+      FRenderControl.HandleNeeded;
       FRenderControl.Target := Control;
     except
       FreeAndNil(FRenderControl);
@@ -427,6 +427,10 @@ begin
     gtk_widget_realize(FWidget);
     drawable:= GTK_WIDGET(FWidget)^.window;
     FDisplay:= GDK_WINDOW_XDISPLAY(drawable);
+
+    // FRenderControl.Align:= alClient breaks the context or something
+    FRenderControl.BoundsRect:= Control.ClientRect;
+    FRenderControl.Anchors:= [akLeft, akTop, akRight, akBottom];
   finally
     XFree(vi);
   end;
@@ -434,12 +438,14 @@ end;
 
 procedure TGLContextGtk2GLX.CloseContext;
 begin
+  if not Assigned(FWidget) then exit;
   glXDestroyContext(FDisplay, FContext);
   FreeAndNil(FRenderControl);
 end;
 
 procedure TGLContextGtk2GLX.Activate;
 begin
+  if not Assigned(FWidget) then exit;
   // make sure the widget is realized
   gtk_widget_realize(FWidget);
   if not GTK_WIDGET_REALIZED(FWidget) then exit;
@@ -451,12 +457,14 @@ end;
 
 procedure TGLContextGtk2GLX.Deactivate;
 begin
+  if not Assigned(FWidget) then exit;
   glXMakeCurrent(FDisplay, GDK_DRAWABLE_XID(GTK_WIDGET(FWidget)^.window), nil);
 end;
 
 function TGLContextGtk2GLX.IsActive: boolean;
 begin
   Result:= (FContext = glXGetCurrentContext()) and
+           Assigned(FWidget) and
            (GDK_DRAWABLE_XID(GTK_WIDGET(FWidget)^.window) = glXGetCurrentDrawable());
 end;
 
@@ -464,6 +472,7 @@ procedure TGLContextGtk2GLX.SwapBuffers;
 var
   drawable: PGdkDrawable;
 begin
+  if not Assigned(FWidget) then exit;
   drawable:= GTK_WIDGET(FWidget)^.window;
   glXSwapBuffers(FDisplay, GDK_DRAWABLE_XID(drawable));
 end;
@@ -494,4 +503,4 @@ begin
 end;
 
 end.
-
+

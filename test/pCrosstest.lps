@@ -4,7 +4,7 @@
     <PathDelim Value="\"/>
     <Version Value="9"/>
     <BuildModes Active="Default"/>
-    <Units Count="68">
+    <Units Count="72">
       <Unit0>
         <Filename Value="pCrosstest.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -12,7 +12,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="19"/>
-        <UsageCount Value="116"/>
+        <UsageCount Value="119"/>
       </Unit0>
       <Unit1>
         <Filename Value="uCrosstest.pas"/>
@@ -21,11 +21,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="uCrosstest"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="56"/>
-        <CursorPos X="43" Y="73"/>
-        <UsageCount Value="116"/>
+        <TopLine Value="62"/>
+        <CursorPos X="53" Y="81"/>
+        <UsageCount Value="119"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
@@ -34,31 +34,32 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="dglOpenGL"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="15029"/>
-        <CursorPos X="25" Y="15056"/>
-        <UsageCount Value="116"/>
+        <TopLine Value="19173"/>
+        <CursorPos X="22" Y="19179"/>
+        <UsageCount Value="119"/>
       </Unit2>
       <Unit3>
         <Filename Value="..\GLContext.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="GLContext"/>
-        <EditorIndex Value="0"/>
+        <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="40" Y="5"/>
-        <UsageCount Value="114"/>
+        <TopLine Value="46"/>
+        <CursorPos X="26" Y="14"/>
+        <UsageCount Value="117"/>
         <Loaded Value="True"/>
       </Unit3>
       <Unit4>
         <Filename Value="..\GLContextGtk2GLX.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="GLContextGtk2GLX"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="370"/>
-        <CursorPos X="31" Y="371"/>
-        <FoldState Value=" T3nR0k021_"/>
-        <UsageCount Value="71"/>
+        <TopLine Value="357"/>
+        <CursorPos X="42" Y="428"/>
+        <FoldState Value=" T3nR0k{"/>
+        <UsageCount Value="74"/>
         <Bookmarks Count="1">
           <Item0 X="1" Y="357" ID="9"/>
         </Bookmarks>
@@ -68,12 +69,11 @@
         <Filename Value="..\GLContextGtkCustomVisual.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="GLContextGtkCustomVisual"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="20"/>
-        <CursorPos X="28" Y="38"/>
-        <UsageCount Value="21"/>
+        <TopLine Value="147"/>
+        <CursorPos X="35" Y="162"/>
+        <UsageCount Value="24"/>
         <Loaded Value="True"/>
       </Unit5>
       <Unit6>
@@ -287,8 +287,8 @@
         <Filename Value="..\..\..\..\..\usr\lib64\lazarus\lcl\controls.pp"/>
         <UnitName Value="Controls"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="2136"/>
-        <CursorPos X="55" Y="2151"/>
+        <TopLine Value="1217"/>
+        <CursorPos X="14" Y="1232"/>
         <UsageCount Value="42"/>
       </Unit33>
       <Unit34>
@@ -348,8 +348,8 @@
       <Unit41>
         <Filename Value="..\..\fpc-2.7.1\source\packages\gtk2\src\gtk+\gtk\gtkwidget.inc"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="1" Y="1"/>
+        <TopLine Value="575"/>
+        <CursorPos X="4" Y="577"/>
         <UsageCount Value="10"/>
       </Unit41>
       <Unit42>
@@ -454,8 +454,8 @@
         <Filename Value="..\..\fpc-2.7.1\source\packages\gtk2\src\glib\glib2.pas"/>
         <UnitName Value="glib2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="19"/>
-        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1223"/>
+        <CursorPos X="4" Y="1225"/>
         <UsageCount Value="10"/>
       </Unit55>
       <Unit56>
@@ -549,67 +549,163 @@
         <CursorPos X="60" Y="718"/>
         <UsageCount Value="10"/>
       </Unit67>
+      <Unit68>
+        <Filename Value="..\..\fpc-2.7.1\source\packages\gtk2\src\gtk+\gtk\gtktypeutils.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="293"/>
+        <CursorPos X="10" Y="309"/>
+        <UsageCount Value="10"/>
+      </Unit68>
+      <Unit69>
+        <Filename Value="..\..\fpc-2.7.1\source\packages\gtk2\src\glib\gtype.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="224"/>
+        <CursorPos X="10" Y="240"/>
+        <UsageCount Value="10"/>
+      </Unit69>
+      <Unit70>
+        <Filename Value="..\..\fpc-2.7.1\source\packages\gtk2\src\gtk2x11\include\gdkx.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="25"/>
+        <CursorPos X="10" Y="41"/>
+        <UsageCount Value="10"/>
+      </Unit70>
+      <Unit71>
+        <Filename Value="..\..\..\..\..\usr\lib64\lazarus\lcl\include\control.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1908"/>
+        <CursorPos X="3" Y="1917"/>
+        <UsageCount Value="10"/>
+      </Unit71>
     </Units>
     <General>
       <ActiveWindowIndexAtStart Value="0"/>
     </General>
-    <JumpHistory Count="13" HistoryIndex="12">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="..\GLContextGtk2GLX.pas"/>
-        <Caret Line="522" Column="1" TopLine="507"/>
+        <Caret Line="370" Column="49" TopLine="334"/>
       </Position1>
       <Position2>
         <Filename Value="..\GLContextGtk2GLX.pas"/>
-        <Caret Line="13" Column="19" TopLine="1"/>
+        <Caret Line="371" Column="1" TopLine="355"/>
       </Position2>
       <Position3>
         <Filename Value="..\GLContextGtk2GLX.pas"/>
-        <Caret Line="570" Column="1" TopLine="610"/>
+        <Caret Line="377" Column="1" TopLine="365"/>
       </Position3>
       <Position4>
         <Filename Value="..\GLContextGtk2GLX.pas"/>
-        <Caret Line="537" Column="3" TopLine="357"/>
+        <Caret Line="378" Column="1" TopLine="365"/>
       </Position4>
       <Position5>
         <Filename Value="..\GLContextGtk2GLX.pas"/>
-        <Caret Line="7" Column="1" TopLine="1"/>
+        <Caret Line="379" Column="1" TopLine="365"/>
       </Position5>
       <Position6>
         <Filename Value="..\GLContextGtk2GLX.pas"/>
-        <Caret Line="531" Column="70" TopLine="506"/>
+        <Caret Line="342" Column="1" TopLine="283"/>
       </Position6>
       <Position7>
         <Filename Value="..\GLContextGtk2GLX.pas"/>
-        <Caret Line="356" Column="24" TopLine="43"/>
+        <Caret Line="379" Column="1" TopLine="364"/>
       </Position7>
       <Position8>
-        <Filename Value="..\GLContextGtkCustomVisual.pas"/>
-        <Caret Line="59" Column="36" TopLine="44"/>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="380" Column="1" TopLine="364"/>
       </Position8>
       <Position9>
-        <Filename Value="..\GLContextGtkCustomVisual.pas"/>
-        <Caret Line="20" Column="17" TopLine="4"/>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="381" Column="1" TopLine="364"/>
       </Position9>
       <Position10>
-        <Filename Value="..\GLContextGtkCustomVisual.pas"/>
-        <Caret Line="178" Column="44" TopLine="174"/>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="382" Column="1" TopLine="364"/>
       </Position10>
       <Position11>
-        <Filename Value="..\GLContextGtkCustomVisual.pas"/>
-        <Caret Line="125" Column="24" TopLine="110"/>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="383" Column="1" TopLine="364"/>
       </Position11>
       <Position12>
-        <Filename Value="..\GLContextGtkCustomVisual.pas"/>
-        <Caret Line="139" Column="24" TopLine="113"/>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="395" Column="1" TopLine="378"/>
       </Position12>
       <Position13>
-        <Filename Value="..\GLContextGtkCustomVisual.pas"/>
-        <Caret Line="137" Column="45" TopLine="134"/>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="401" Column="1" TopLine="390"/>
       </Position13>
+      <Position14>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="402" Column="1" TopLine="390"/>
+      </Position14>
+      <Position15>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="404" Column="1" TopLine="390"/>
+      </Position15>
+      <Position16>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="414" Column="1" TopLine="405"/>
+      </Position16>
+      <Position17>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="415" Column="1" TopLine="405"/>
+      </Position17>
+      <Position18>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="416" Column="1" TopLine="405"/>
+      </Position18>
+      <Position19>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="417" Column="1" TopLine="405"/>
+      </Position19>
+      <Position20>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="418" Column="1" TopLine="405"/>
+      </Position20>
+      <Position21>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="423" Column="1" TopLine="405"/>
+      </Position21>
+      <Position22>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="445" Column="23" TopLine="428"/>
+      </Position22>
+      <Position23>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="439" Column="20" TopLine="413"/>
+      </Position23>
+      <Position24>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="428" Column="38" TopLine="413"/>
+      </Position24>
+      <Position25>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="414" Column="40" TopLine="413"/>
+      </Position25>
+      <Position26>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="431" Column="36" TopLine="413"/>
+      </Position26>
+      <Position27>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="431" Column="27" TopLine="413"/>
+      </Position27>
+      <Position28>
+        <Filename Value="..\GLContextGtk2GLX.pas"/>
+        <Caret Line="431" Column="52" TopLine="415"/>
+      </Position28>
+      <Position29>
+        <Filename Value="uCrosstest.pas"/>
+        <Caret Line="83" Column="32" TopLine="63"/>
+      </Position29>
+      <Position30>
+        <Filename Value="uCrosstest.pas"/>
+        <Caret Line="82" Column="32" TopLine="62"/>
+      </Position30>
     </JumpHistory>
   </ProjectSession>
   <Debugging>
-    <BreakPoints Count="4">
+    <BreakPoints Count="2">
       <Item1>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
@@ -624,20 +720,6 @@
         <Source Value="..\glcontextgtkcustomvisual.pas"/>
         <Line Value="214"/>
       </Item2>
-      <Item3>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="use\dglOpenGL.pas"/>
-        <Line Value="19189"/>
-      </Item3>
-      <Item4>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="use\dglOpenGL.pas"/>
-        <Line Value="15056"/>
-      </Item4>
     </BreakPoints>
   </Debugging>
   <EditorMacros Count="0"/>

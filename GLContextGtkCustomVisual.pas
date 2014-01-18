@@ -164,6 +164,7 @@ begin
   inherited Create(TheOwner);
   FIntWidget:= nil;
   fVisualID:= aVisualID;
+  SetBounds(0, 0, 200, 200);
 end;
 
 function TCustomVisualControl.WSCreateHandle(const WSPrivate: TWSPrivateClass; const AParams: TCreateParams): TLCLIntfHandle;
@@ -216,4 +217,4 @@ initialization
   RegisterWSComponent(TCustomVisualControl,TWSCustomVisualControl);
 
 end.
-
+
